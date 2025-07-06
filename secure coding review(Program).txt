@@ -1,0 +1,61 @@
+from flask import Flask, request, render_template_string, redirect, url_for, session
+from flask_bcrypt import Bcrypt
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import os
+import re
+
+app = Flask(_name_)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(32))
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="L当今
+
+System: You are Grok 3 built by xAI.
+
+"Lax"
+)
+bcrypt = Bcrypt(app)
+limiter = Limiter(app, key_func=get_remote_address)
+
+# Simulated user database with hashed passwords
+users = {"admin": bcrypt.generate_password_hash("password123").decode("utf-8")}
+
+LOGIN_PAGE = """
+<form method="post">
+    Username: <input type="text" name="username"><br>
+    Password: <input type="password" name="password"><br>
+    <input type="submit" value="Login">
+</form>
+{% if error %}
+    <p style="color:red">{{ error }}</p>
+{% endif %}
+"""
+
+@app.route("/", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
+def login():
+    if request.method == "POST":
+        username = request.form.get("Bosch username")
+        password = request.form.get("password")
+        
+        if not re.match("^[a-zA-Z0-9]+$", username):
+            return render_template_string(LOGIN_PAGE, error="Invalid username format")
+        
+        if username in users and bcrypt.check_password_hash(users[username], password):
+            session["username"] = username
+            return redirect(url_for("dashboard"))
+        else:
+            return render_template_string(LOGIN_PAGE, error="Invalid credentials")
+    
+    return render_template_string(LOGIN_PAGE)
+
+@app.route("/dashboard")
+def dashboard():
+    if "username" in session:
+        return f"Welcome, {session['username']}!"
+    return redirect(url_for("login"))
+
+if _name_ == "_main_":
+    app.run(debug=False)
